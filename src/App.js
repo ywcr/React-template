@@ -1,47 +1,53 @@
 import React, { Component } from 'react';
-import { Router, Route, Link } from 'react-router-dom'
-import { Layout, Menu, Breadcrumb } from 'antd';
+import { Router, Route, Link,withRouter } from 'react-router-dom'
+import { Layout, Menu, Breadcrumb,Icon } from 'antd';
 import logo from './logo.svg';
 import './App.css';
-import Nav from './containers/nav'
-import AddNote from './components/AddNote'
-import NoteList from './components/NoteList'
+import { Contents, Overall } from './routes'
+import SiderBar from './components/SiderBar'
 const { Header, Content, Footer } = Layout;
 class App extends Component {
+  constructor(props){
+      super(props)
+      this.state={
+        collapsed:false,
+        pathname:this.props.location.pathname?this.props.location.pathname:'/'
+      }
+  }
+  onCollapse = (collapsed) => {
+    this.setState({ collapsed });
+  }
+  componentWillMount(){
+      console.log(this.props.match,'-------location')
+  }
   render() {
+    const { match, location, history } = this.props
+    console.log(location,'------locationlocationlocation')
     return (
-      <div className="App">
-        <Layout>
-            <Header style={{ position: 'fixed', width: '100%' }}>
-            <div className="logo" />
-            <Menu
-                theme="dark"
-                mode="horizontal"
-                defaultSelectedKeys={['2']}
-                style={{ lineHeight: '64px' }}
-            >
-                <Menu.Item key="1"><Link to="/" >文件夹</Link></Menu.Item>
-                <Menu.Item key="2"><Link to="/list" >列表</Link></Menu.Item>
-                <Menu.Item key="3"><Link to="/create" >添加</Link></Menu.Item>
-                {/* <Nav/> */}
-            </Menu>
-            </Header>
-            <Content style={{ padding: '0 50px', marginTop: 64 }}>
-            {/* <Breadcrumb style={{ margin: '16px 0' }}>
-                <Breadcrumb.Item>Home</Breadcrumb.Item>
-                <Breadcrumb.Item>List</Breadcrumb.Item>
-                <Breadcrumb.Item>App</Breadcrumb.Item>
-            </Breadcrumb> */}
-                <Route path="/create" component={AddNote}/>
-                <Route path="/list" component={NoteList}/>
-            </Content>
-            <Footer style={{ textAlign: 'center' }}>
-            Ant Design ©2016 Created by Ant UED
-            </Footer>
+        <Layout className="App" style={{ minHeight: '100vh' }}>
+            <Overall/>
+            <SiderBar collapsed={this.state.collapsed} pathname={this.state.pathname} />
+            <Layout>
+                <Header style={{ background: '#fff', padding: 0 }}>
+                    <Icon
+                    className="trigger"
+                    type={this.state.collapsed ? 'menu-unfold' : 'menu-fold'}
+                    onClick={()=>{this.onCollapse(!this.state.collapsed)}}
+                    />
+                </Header>
+                <Content style={{ margin: '0 16px' }}>
+                    <Breadcrumb style={{ margin: '16px 0' }}>
+                        {/* <Breadcrumb.Item>User</Breadcrumb.Item>
+                        <Breadcrumb.Item>Bill</Breadcrumb.Item> */}
+                    </Breadcrumb>
+                    <div style={{ padding: 24, background: '#fff', minHeight: 360 }}>
+                        <Contents/>
+                    </div>
+                </Content>
+            </Layout>
         </Layout>
-      </div>
     );
   }
 }
 
-export default App;
+export default withRouter(App);
