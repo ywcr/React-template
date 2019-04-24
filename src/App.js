@@ -9,10 +9,6 @@ const { Header, Content, Footer } = Layout;
 class App extends Component {
   constructor(props){
       super(props)
-      this.state={
-        collapsed:false,
-        pathname:this.props.location.pathname?this.props.location.pathname:'/'
-      }
   }
   onCollapse = (collapsed) => {
     this.setState({ collapsed });
@@ -26,14 +22,10 @@ class App extends Component {
     return (
         <Layout className="App" style={{ minHeight: '100vh' }}>
             <Overall/>
-            <SiderBar collapsed={this.state.collapsed} pathname={this.state.pathname} />
+            <SiderBar />
             <Layout>
                 <Header style={{ background: '#fff', padding: 0 }}>
-                    <Icon
-                    className="trigger"
-                    type={this.state.collapsed ? 'menu-unfold' : 'menu-fold'}
-                    onClick={()=>{this.onCollapse(!this.state.collapsed)}}
-                    />
+                   
                 </Header>
                 <Content style={{ margin: '0 16px' }}>
                     <Breadcrumb style={{ margin: '16px 0' }}>
