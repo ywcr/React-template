@@ -1,33 +1,44 @@
 import { getType,genRandomString } from '../common/tools'
 import { camelizeKeys } from 'humps'
 import { normalize } from 'normalizr'
-import cloneDeep from 'lodash/cloneDeep';
+import { message } from 'antd'
 
 function fetchApi(endpoint, options, schema) {
-    console.log(endpoint, options, schema,'----endpoint, options, schema')
     if (!options) {
       options = {
-        method: 'GET'
+        method: 'GET',
       }
     }
     if (!options.credentials) {
       options.credentials = 'same-origin'
-      // options.credentials = 'include'
     }
-    // The request body can be of the type String, Blob, or FormData.
-    // Other data structures need to be encoded before hand as one of these types.
-    // https://github.github.io/fetch/#request-body
+    options.credentials = 'include' // fetch设置携带cookie
+    options.headers = {
+      "Content-Type": "application/x-www-form-urlencoded",
+    }
+
+    // ------ 处理请求类型，设置headers 处理json数据转为string对象 ------
+
     const REQUEST_BODY_METHODS = ['POST', 'PUT', 'PATCH']
     // if set options.noContentType true skip set 'Content-Type'
-    if (!options.noContentType && REQUEST_BODY_METHODS.indexOf(options.method) > -1) {
-      if (!options.headers) options.headers = {}
-      if (!options.headers['Content-Type']) {
-        options.headers['Content-Type'] = 'application/json'
+    if (!options.noContentType && REQUEST_BODY_METHODS.includes(options.method)) {
+    //   if (!options.headers) options.headers = {}
+    //   if (!options.headers['Content-Type']) {
+    //     options.headers['Content-Type'] = 'application/json;charset=UTF-8;'
+    //   }
+    //   let bodyType = getType(options.body)
+    //   if (bodyType === 'object' || bodyType === 'array') {
+    //     options.body = JSON.stringify(options.body)
+    //   }
+
+    // ------ form data 格式化 ------
+
+      var formData  = new FormData();
+
+      for(var name in options.body) {
+        formData.append(name, options.body[name]);
       }
-      let bodyType = getType(options.body)
-      if (bodyType === 'object' || bodyType === 'array') {
-        options.body = JSON.stringify(options.body)
-      }
+      options.body =  new URLSearchParams(formData);
     }
     // And random string in query for IE(avoid use cache)
     let randomQuery = '_=' + genRandomString()
@@ -36,6 +47,7 @@ function fetchApi(endpoint, options, schema) {
     } else {
       endpoint += `?${randomQuery}`
     }
+    
     // Encode url before fetch(multiple encoding produce errors !!!)
     endpoint = encodeURI(endpoint)
     return fetch(endpoint, options).then(response =>
@@ -45,18 +57,31 @@ function fetchApi(endpoint, options, schema) {
         })
       })
     ).then(({json, response}) => {
+      console.log(json,response,'--------response')
       if (!response.ok) {
         return Promise.reject(json)
+      }
+      if(json.c!=200){
+        message.error(json.m)
       }
       const camelizedJson = camelizeKeys(json)
       return Object.assign({},
         normalize(camelizedJson, schema)
       )
+    }).catch(function(error) {
+      console.log('request failed', error)
+      message.error(error.message)
+      return Promise.reject(error)
+      // return Promise.reject(error.message)
+      // {error: "Internal Server Error"
+      // message: "No message available"
+      // path: "/order/add"
+      // status: 500
+      // timestamp: "2019-05-07T06:46:11.092+0000"}
     })
 }
 export const FETCH_API = Symbol('FETCH API')
 export default store => next => action => {
-    console.log('wahahhahahha')
     const fetchAPI = action[FETCH_API]
     if (typeof fetchAPI === 'undefined') {
       return next(action)
@@ -97,7 +122,7 @@ export default store => next => action => {
     //   space.namespace = 'default'
     // }
     // options.headers.teamspace = options.headers.teamspace || space.namespace || ''
-  
+    
     const [requestType, successType, failureType] = types
     next(actionWith({ type: requestType }))
     return fetchApi(endpoint, options, schema).then(

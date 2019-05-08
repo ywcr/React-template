@@ -31,3 +31,9 @@
 .trigger{
   margin-left:20px;
 }
+.ant-dropdown-link{
+  line-height: 30px;
+  height: 30px;
+  display: inline-block;
+  cursor: pointer;
+}
