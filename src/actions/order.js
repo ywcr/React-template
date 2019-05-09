@@ -111,27 +111,28 @@ export const INTER_FLOW_REQUEST = "INTER_FLOW_REQUEST"
 export const INTER_FLOW_SUCCESS = "INTER_FLOW_SUCCESS"
 export const INTER_FLOW_FAILURE = "INTER_FLOW_FAILURE"
 
-function fetchReplyOrder(orderId,flowDescription,userName){
+function fetchReplyOrder(orderId,flowDescription,userName,flowfile){
     return {
         [FETCH_API]:{
             types:[INTER_FLOW_REQUEST,INTER_FLOW_SUCCESS,INTER_FLOW_FAILURE],
             endpoint:`/api/flow/add`,
             options:{
-                method:'POST',
+                method:'post',
                 body:{
                     orderId: orderId,
                     flowDescription:flowDescription,
-                    userName:userName
-                }
+                    userName:userName,
+                    flowfile:flowfile,
+                },
             },
             schema:{}
         }
     }
 }
 
-export function replyOrder(orderId,flowDescription,userName){ //  
+export function replyOrder(orderId,flowDescription,userName,flowfile){ //  
     return (dispatch,getState) => {
-        return dispatch(fetchReplyOrder(orderId,flowDescription,userName))
+        return dispatch(fetchReplyOrder(orderId,flowDescription,userName,flowfile))
     }
 }
 
@@ -161,7 +162,7 @@ export function interFlowList(orderId){ //
     }
 }
 
-//-------------------- 沟通列表 -------------------------
+//-------------------- 下载图片 -------------------------
 
 export const DOWNLOAD_FILE_REQUEST = "DOWNLOAD_FILE_REQUEST"
 export const DOWNLOAD_FILE_SUCCESS = "DOWNLOAD_FILE_SUCCESS"
@@ -173,7 +174,7 @@ function fetchDownloadFile(id){
             types:[DOWNLOAD_FILE_REQUEST,DOWNLOAD_FILE_SUCCESS,DOWNLOAD_FILE_FAILURE],
             endpoint:`/api/flow/download?id=${id}`,
             options:{
-                method:'GET',
+                method:'get',
             },
             schema:{}
         }
@@ -185,31 +186,6 @@ export function downloadFile(id){
         return dispatch(fetchDownloadFile(id))
     }
 }
-
-//-------------------- 下载图片 -------------------------
-
-// export const DOWNLOAD_FILE_REQUEST = "DOWNLOAD_FILE_REQUEST"
-// export const DOWNLOAD_FILE_SUCCESS = "DOWNLOAD_FILE_SUCCESS"
-// export const DOWNLOAD_FILE_FAILURE = "DOWNLOAD_FILE_FAILURE"
-
-// function fetchDownloadFile(id){
-//     return {
-//         [FETCH_API]:{
-//             types:[DOWNLOAD_FILE_REQUEST,DOWNLOAD_FILE_SUCCESS,DOWNLOAD_FILE_FAILURE],
-//             endpoint:`/api/flow/download?id=${id}`,
-//             options:{
-//                 method:'get',
-//             },
-//             schema:{}
-//         }
-//     }
-// }
-
-// export function downloadFile(id){
-//     return (dispatch,getState) => {
-//         return dispatch(fetchDownloadFile(id))
-//     }
-// }
 
 //-------------------- 问题列表 -------------------------
 

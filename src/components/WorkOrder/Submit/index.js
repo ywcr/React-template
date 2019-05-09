@@ -14,19 +14,25 @@ export class SubmitWorkOrder extends Component {
       submitting:false,
       issueType:"",
       visible:false,
-      orderType:""
+      orderType:"",
+      type:""
     }
   }
   componentDidMount(){
     const {questionList} = this.props;
     questionList();
+    if(this.props.match.params.type==1){
+      this.showModal();
+    }
   }
   showModal(item){
+    const orderType = this.props.match.params.type
     this.setState({
       visible: true,
-      issueType:item.questionTitle,
-      orderType:2,
-      questionId:item.id,
+      issueType:orderType==1?"合作招募":item.questionTitle,
+      orderType:orderType||2,
+      questionId:orderType==1?"":item.id,
+      type:orderType==1?"业务中台合作伙伴招募":"提交工单"
     });
   }
   handleSubmit(e){
@@ -42,14 +48,15 @@ export class SubmitWorkOrder extends Component {
         values.orderType = this.state.orderType
         values.questionId = this.state.questionId
         submitOrder(values).then(({response})=>{
-          console.log(response,'-------ressss')
           return response.result;
         }).then((data)=>{
-          console.log(data,'-----json')
-          if(data.c == 200){
+          if(data.c === 200){
             this.setState({
               visible:false
             })
+            if(this.props.match.params.type==1){
+              this.props.history.push("/submit/2")
+            }
             message.success(data.m)
           }else{
             this.setState({
@@ -116,12 +123,13 @@ export class SubmitWorkOrder extends Component {
           {question}
         </Row>
         <Modal
-          title="提交工单"
+          title={this.state.type}
           visible={this.state.visible}
           onCancel={()=>{this.setState({visible:false})}}
           footer={null}
         >
           <Form {...formItemLayout} onSubmit={this.handleSubmit}>
+          
               <Form.Item
                 label="分类"
               >
@@ -173,6 +181,15 @@ export class SubmitWorkOrder extends Component {
                 })(
                   <Input placeholder="请输入邮箱" />
                 )}
+              </Form.Item>
+              <Form.Item
+                label="提前阅读"
+              >
+                <Row>
+                  <Col>1、<a target="_blank" rel="noopener noreferrer" href="http://me.enncloud.cn/doc/service1">查看接入服务规范</a></Col>
+                  <Col>2、<a target="_blank" rel="noopener noreferrer" href="http://me.enncloud.cn/doc/service1">查看服务接入指南</a></Col>
+                  <Col>3、<a target="_blank" rel="noopener noreferrer" href="http://me.enncloud.cn/doc/service1">查看中台合作服务协议</a></Col>
+                </Row>
               </Form.Item>
               <Form.Item {...tailFormItemLayout}>
                 <Button type="primary" loading={this.state.submitting} htmlType="submit">提交工单</Button>

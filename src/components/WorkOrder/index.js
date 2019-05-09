@@ -39,11 +39,12 @@ export class OrderList extends Component {
   }
   chooseTime(date,dateString){// 时间选择器
     this.setState({
-      day:"",
+      day:date.length!=0?"":"today",
       screenDate:date
     },()=>{
       this.getWorkOrderList();
     })
+    
     
   }
   handleStatusChange(val){// 状态筛选
@@ -58,24 +59,28 @@ export class OrderList extends Component {
   }
   getWorkOrderList(page){//获取列表
     const {getOrderList,user} = this.props;
-    const {screenDate} = this.state;
+    const {screenDate,searchVal,chooseStatus} = this.state;
     let startDate = "";
     let endDate="";
     switch (this.state.day) {
       case 'today':
         startDate = moment().format("YYYY-MM-DD 00:00:00");
-        endDate = moment().format("YYYY-MM-DD hh:mm:ss");
+        endDate = moment().format("YYYY-MM-DD HH:mm:ss");
         break;
       case 'seven_day':
         startDate = moment().subtract(7,'d').format("YYYY-MM-DD 00:00:00");
-        endDate = moment().format("YYYY-MM-DD hh:mm:ss");
+        endDate = moment().format("YYYY-MM-DD HH:mm:ss");
+        break;
+      case 'all':
+        startDate="";
+        endDate="";
         break;
       default:
-        startDate = screenDate[0]
-        endDate = screenDate[1]
+        startDate = moment(screenDate[0]).format("YYYY-MM-DD 00:00:00");
+        endDate = moment(screenDate[1]).format("YYYY-MM-DD HH:mm:ss");
         break;
     }
-    getOrderList(startDate,endDate,this.state.searchVal,this.state.chooseStatus,page||1)
+    getOrderList(startDate,endDate,searchVal,chooseStatus==0?'':chooseStatus,page||1)
   }
   disabledDate(current) {
     // Can not select days before today and today
@@ -84,47 +89,57 @@ export class OrderList extends Component {
   
   render() {
     const day = this.state.day;
-
-    const dataSource = [
-      {
-        key: '1',
-        name: '胡彦斌',
-        age: 32,
-        address: '西湖区湖底公园1号'
-      }
-    ];
+    const {orderList} = this.props;
+    const dataSource = orderList&&orderList.order;
     
     const columns = [{
       title: '工单编号',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'orderCode',
+      key: 'orderCode',
     }, {
-      title: '问题描述',
-      dataIndex: 'age',
-      key: 'age',
+      title: '描述',
+      dataIndex: 'orderDescription',
+      key: 'orderDescription',
     }, {
-      title: '问题分类',
-      dataIndex: 'address',
-      key: 'address',
+      title: '分类',
+      dataIndex: 'question',
+      key: 'question',
+      render:(text,record)=>{
+        return <span>{text?text.questionTitle:(record.orderType==1?"合作招募":'')}</span>
+      }
     }, {
       title: '状态',
-      dataIndex: 'address1',
-      key: 'address1',
+      dataIndex: 'status',
+      key: 'status',
+      render:(text,record)=>{
+        switch(text){
+          case 1:
+            return <span>待处理</span>
+            break;
+          case 2:
+            return <span>处理中</span>
+            break;
+          case 3:
+            return <span>结单</span>
+            break;
+          default: 
+            break;
+        } 
+      }
     }, {
       title: '提交账户',
-      dataIndex: 'address2',
-      key: 'address2',
+      dataIndex: 'realName',
+      key: 'realName',
     }, {
       title: '提交时间',
-      dataIndex: 'address3',
-      key: 'address3',
+      dataIndex: 'createTime',
+      key: 'createTime',
+      render:(text,record)=><span>{moment(text).format('YYYY年MM月DD日 HH:mm:ss')}</span>
     }, {
       title: '操作',
-      dataIndex: 'address4',
-      key: 'address4',
-      render:(text,record)=>(
-          <Link to={`/detail/${record.key}`}>查看</Link>
-      )
+      dataIndex: 'id',
+      key: 'id',
+      render:(text,record)=><Link to={`/detail/${text}`}>查看</Link>
     }];
 
     return (
@@ -166,9 +181,10 @@ export class OrderList extends Component {
 }
 
 const mapStateToProps = (state) => {
-    const {users} = state
+    const {users,order} = state
     return {
-      user:users.usersDetail.data
+      user:users.usersDetail.data,
+      orderList:order.orderList.data
     }
 }
 

@@ -70,13 +70,12 @@ class App extends Component {
                             <Col span={8}></Col>
                             <Col span={6}></Col>
                             <Col span={2}>
-                                <Dropdown overlay={menu} trigger={['click']}>
+                                {cookie.load('lgname')?<Dropdown overlay={menu} trigger={['click']}>
                                     <span className="ant-dropdown-link" href="#">
                                         {cookie.load('lgname')}<Icon type="down" />
                                     </span>
-                                </Dropdown>
+                                </Dropdown>:<Link to="/login" style={{color:"#000"}} >登录</Link>}
                             </Col>
-
                         </Row>
                     </div>
                 </Header>

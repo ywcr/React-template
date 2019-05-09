@@ -11,12 +11,11 @@ export const Contents = ()=>(
     <Switch>
         <Route exact path='/' component={WorkOrder}/>
         <Route path="/detail/:id" component={WorkOrderDetail}/>
-        <Route path="/submit" component={SubmitWorkOrder}/>
+        <Route path="/submit/:type" component={SubmitWorkOrder}/>
     </Switch>
 )
 export const Overall = ()=>(
     <Switch>
         <Route path="/login" component={Login}></Route>
-        
     </Switch>
 )

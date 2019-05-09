@@ -13,33 +13,33 @@ function fetchApi(endpoint, options, schema) {
       options.credentials = 'same-origin'
     }
     options.credentials = 'include' // fetch设置携带cookie
-    options.headers = {
-      "Content-Type": "application/x-www-form-urlencoded",
-    }
 
     // ------ 处理请求类型，设置headers 处理json数据转为string对象 ------
 
     const REQUEST_BODY_METHODS = ['POST', 'PUT', 'PATCH']
-    // if set options.noContentType true skip set 'Content-Type'
+      // if set options.noContentType true skip set 'Content-Type'
     if (!options.noContentType && REQUEST_BODY_METHODS.includes(options.method)) {
-    //   if (!options.headers) options.headers = {}
-    //   if (!options.headers['Content-Type']) {
-    //     options.headers['Content-Type'] = 'application/json;charset=UTF-8;'
-    //   }
-    //   let bodyType = getType(options.body)
-    //   if (bodyType === 'object' || bodyType === 'array') {
-    //     options.body = JSON.stringify(options.body)
-    //   }
+      if (!options.headers) options.headers = {}
+      if (!options.headers['Content-Type']) {
+        options.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8'
+      }
+      //   let bodyType = getType(options.body)
+      //   if (bodyType === 'object' || bodyType === 'array') {
+      //     options.body = JSON.stringify(options.body)
+      //   }
 
-    // ------ form data 格式化 ------
+      // ------ 格式化数据 format data ------
+      options.body =  new URLSearchParams(options.body).toString();
+    }
 
+    if(endpoint.includes('flow/add')){ // 添加回复 处理数据格式
       var formData  = new FormData();
-
       for(var name in options.body) {
         formData.append(name, options.body[name]);
       }
-      options.body =  new URLSearchParams(formData);
+      options.body =  formData;
     }
+
     // And random string in query for IE(avoid use cache)
     let randomQuery = '_=' + genRandomString()
     if (endpoint.indexOf('?') > -1) {
@@ -47,7 +47,6 @@ function fetchApi(endpoint, options, schema) {
     } else {
       endpoint += `?${randomQuery}`
     }
-    
     // Encode url before fetch(multiple encoding produce errors !!!)
     endpoint = encodeURI(endpoint)
     return fetch(endpoint, options).then(response =>
@@ -57,12 +56,16 @@ function fetchApi(endpoint, options, schema) {
         })
       })
     ).then(({json, response}) => {
-      console.log(json,response,'--------response')
       if (!response.ok) {
         return Promise.reject(json)
       }
       if(json.c!=200){
-        message.error(json.m)
+        if(json.c==401){
+          message.error(json.m)
+          window.location.href="http://me.enncloud.cn:8080/center/user/tologin"
+        }else{
+          message.error(json.m)
+        }
       }
       const camelizedJson = camelizeKeys(json)
       return Object.assign({},

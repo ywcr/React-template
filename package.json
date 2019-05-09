@@ -4,7 +4,7 @@
   "private": true,
   "proxy": {
     "/api": {
-      "target": "http://10.4.109.3:8080",
+      "target": "http://10.4.111.190:8080",
       "changeOrigin": true,
       "pathRewrite": {
         "^/api": "/"

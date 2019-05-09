@@ -1,44 +1,123 @@
 import React, { Component } from "react";
-import { Comment, Avatar, Form, Button, List, Input,Upload,Icon,message } from "antd";
+import { Comment, Avatar, Form, Button, List, Input,Upload,Icon,message,Modal } from "antd";
 import { connect } from 'react-redux'
 import moment from "moment";
+import {interFlowList,replyOrder,downloadFile} from '../../../../actions/order'
+import cooke from 'react-cookies';
 import './styles/index.less'
 
 const TextArea = Input.TextArea;
+function convertImgToBase64(url, callback, outputFormat){
+  var canvas = document.createElement('CANVAS'),
+      ctx = canvas.getContext('2d'),
+      img = new Image;
+      img.crossOrigin = 'Anonymous';
+      img.onload = function(){
+          canvas.height = img.height;
+          canvas.width = img.width;
+          ctx.drawImage(img,0,0);
+          var dataURL = canvas.toDataURL(outputFormat || 'image/png');
+          callback.call(this, dataURL);
+          canvas = null; 
+      };
+      img.src = url;
+}
 
-const CommentList = ({ comments }) => (
+
+const CommentList = ({ comments,downloadImg}) => (
   <List
     className="commentList"
     dataSource={comments}
     header={`沟通记录：${comments.length} 条 `}
     itemLayout="horizontal"
-    renderItem={props => <Comment {...props} />}
+    renderItem={item => <Comment 
+    author={item.realName}
+    avatar="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"
+    content={(<div><span>{item.flowDescription}</span>{item.attachmentFilename?<div style={{fontSize:12}}><a onClick={()=>{downloadImg(item.id)}}> 查看图片</a></div>:""}</div>)}
+    datetime={moment(item.createTime).format('YYYY-MM-DD HH:mm:ss')} />}
   />
+);
+
+const Editor = ({ onChange, onSubmit, submitting, value,props }) => (//根据数据判断是否显示输入框
+  <div>
+    <Form.Item>
+      <TextArea rows={4} onChange={onChange} value={value} /> 
+      <div style={{float:"left"}}>
+        <Upload {...props}>
+          <Button style={{marginRight:"10px"}}>
+            <Icon type="upload" /> 添加附件
+          </Button>
+          支持.png、.jpg、.jpeg格式，最大不超过5M
+        </Upload>
+      </div>
+    </Form.Item>
+    <Form.Item>
+      
+      <Button
+        htmlType="submit"
+        loading={submitting}
+        onClick={onSubmit}
+        type="primary"
+      >
+        提交回复
+      </Button>
+    </Form.Item>
+  </div>
 );
 
 class CommentWorkOrder extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      comments: [{author: "Han Solo", avatar: "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png", content: "sdfsdf", datetime: "2019年04月25日 17:54:50"},
-      {author: "Han Solo", avatar: "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png", content: "wfewef", datetime: "2019年04月25日 17:54:54"},
-      {author: "Han Solo", avatar: "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png", content: "123123", datetime: "2019年04月25日 17:54:56"},
-      {author: "Han Solo", avatar: "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png", content: "123123", datetime: "2019年04月25日 17:54:56"},
-      {author: "Han Solo", avatar: "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png", content: "123123", datetime: "2019年04月25日 17:54:56"},
-      {author: "Han Solo", avatar: "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png", content: "123123", datetime: "2019年04月25日 17:54:56"},
-      {author: "Han Solo", avatar: "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png", content: "fewfwef", datetime: "2019年04月25日 17:54:59"}],
+      comments: [],
       submitting: false,
       value: "",
       fileList: [],
+      visible:false,
     };
   }
 
   componentDidMount(){
-      const dom = document.querySelector('.ant-spin-container');
-      dom.scrollTop = dom.offsetHeight;
+    this.getFlowList();
   }
-
+  componentWillReceiveProps(nextProps){
+    console.log(nextProps,'----nextProps')
+  }
+  getFlowList =()=>{
+    const {interFlowList,orderId} = this.props;
+    
+    interFlowList(orderId).then(({response})=>response.result).then((data)=>{
+      this.setState({
+        comments:data.d?data.d.flows:[]
+      },()=>{
+        setTimeout(()=>{
+          const dom = document.querySelector('.ant-spin-container');
+          dom.scrollTop = dom.scrollHeight;
+        },1000)
+      })
+    })
+  }
+  downloadImg = (id)=>{
+    const {downloadFile} = this.props;
+    const _this = this;
+    downloadFile(id).then(({response})=>{
+      this.setState({
+        img:encodeURI(response.result.d.image)
+      },()=>{
+        _this.setState({
+          visible:true
+        })
+      })
+    })
+  }
+  handleCancel = () => {
+    this.setState({
+      visible:false,
+      img:''
+    })
+  }
   handleSubmit = () => { // 提交数据
+    const {replyOrder,orderId} = this.props;
     if (!this.state.value) {
       return;
     }
@@ -46,27 +125,33 @@ class CommentWorkOrder extends Component {
     this.setState({
       submitting: true
     });
-
-    setTimeout(() => {
-      this.setState({
-        submitting: false,
-        value: "",
-        comments: [ // 传输的数据
-          ...this.state.comments,
-          {
-            author: "Han Solo",
-            avatar:
-              "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
-            content: this.state.value,
-            datetime: moment().format('YYYY年MM月DD日 HH:mm:ss')
-          }
-        ]
-      },()=>{
-        const dom = document.querySelector('.ant-spin-container');
-        dom.scrollTop = dom.offsetHeight;
-        console.log(this.state.comments,'----dom')
-      });
-    }, 1000);
+    replyOrder(orderId,this.state.value,cooke.load('lgname'),this.state.fileList[0]||'').then(({response})=>{
+      return response.result;
+    }).then((data)=>{
+      if(data.c==200){
+        setTimeout(() => {
+          this.setState({
+            submitting: false,
+            value: "",
+            fileList:[]
+            // comments: [ // 传输的数据
+            //   ...this.state.comments,
+            //   {
+            //     realName: cooke.load('lgname'),
+            //     avatar:
+            //       "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
+            //     flowDescription: this.state.value,
+            //     createTime: moment().format('YYYY年MM月DD日 HH:mm:ss')
+            //   }
+            // ]
+          });
+        }, 1000);
+        this.getFlowList();
+      }else{
+        message.error('添加回复失败！')
+      }
+    })
+    
   };
 
   handleChange = e => { // 输入内容。
@@ -91,8 +176,7 @@ class CommentWorkOrder extends Component {
           });
         },
         beforeUpload: (file) => {
-          console.log(file,'----file')
-          if(file.size>5120){
+          if(file.size>512000){
             message.warning('文件大小不得超过5M');
             return false;
           }else if(fileList.length == 1){
@@ -100,41 +184,17 @@ class CommentWorkOrder extends Component {
             return false;
           }
           this.setState(state => ({
-            fileList: [...state.fileList, file],
+            fileList: [file],
+            // fileList: [...state.fileList, file],
           }));
           return false;
         },
+        accept:".png,.jpg,.jpeg",
         fileList,
     };
-    const Editor = ({ onChange, onSubmit, submitting, value }) => (//根据数据判断是否显示输入框
-      <div>
-        <Form.Item>
-          <TextArea rows={4} onChange={onChange} value={value} /> 
-          <div style={{float:"left"}}>
-            <Upload {...props}>
-              <Button style={{marginRight:"10px"}}>
-                <Icon type="upload" /> 文件上传
-              </Button>
-              支持.png、.jpg、.jpeg、.txt、.rar、.doc、.xls、.xlsx、.zip、.7z格式，最大不超过5M
-            </Upload>
-          </div>
-        </Form.Item>
-        <Form.Item>
-          
-          <Button
-            htmlType="submit"
-            loading={submitting}
-            onClick={onSubmit}
-            type="primary"
-          >
-            提交回复
-          </Button>
-        </Form.Item>
-      </div>
-    );
     return (
       <div>
-        <CommentList comments={comments} />
+        <CommentList comments={comments} downloadImg = {this.downloadImg} />
         {this.props.isEditor?<Comment
           avatar={
             <Avatar
@@ -148,16 +208,29 @@ class CommentWorkOrder extends Component {
               onSubmit={this.handleSubmit}
               submitting={submitting}
               value={value}
+              props={props}
               state = {this.state}
             />
           }
         />:''}
+        <Modal
+          title="查看图片"
+          visible={this.state.visible}
+          onCancel={this.handleCancel}
+          footer={[]}
+        >
+          {this.state.img?<img src={`data:image/png;base64,`+this.state.img}/>:null}
+        </Modal>
       </div>
     );
   }
 }
 const mapStateToProps = (state)=>{
-
+  return {}
 }
 
-export default connect(mapStateToProps,{})(CommentWorkOrder);
+export default connect(mapStateToProps,{
+  interFlowList,
+  replyOrder,
+  downloadFile
+})(CommentWorkOrder);

@@ -39,7 +39,7 @@ export class siderBar extends Component {
                     <Icon type="pie-chart" />
                     <span>工单列表</span>
                 </Menu.Item>
-                <Menu.Item key="/submit">
+                <Menu.Item key="/submit/2">
                     <Icon type="user" />
                     <span>提交工单</span>     
                 </Menu.Item>
